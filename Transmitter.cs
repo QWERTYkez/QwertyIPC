@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Pipes;
 using System.Threading;
@@ -24,6 +25,7 @@ public static class Transmitter
                 {
                     using var server = new NamedPipeServerStream($"{Environment.UserDomainName}-{Environment.UserName}-{transmitterName}");
                     server.WaitForConnection();
+                    using var reader = new StreamReader(server);
                 }
                 finally
                 {
@@ -39,6 +41,7 @@ public static class Transmitter
                 {
                     using var server = new NamedPipeServerStream($"{Environment.UserDomainName}-{Environment.UserName}-{transmitterName}");
                     await server.WaitForConnectionAsync(cancelTokenSource.Token);
+                    using var reader = new StreamReader(server);
                     action?.Invoke(cancelTokenSource);
                 }
                 catch (OperationCanceledException)
@@ -63,23 +66,24 @@ public static class Transmitter
         public static Task Receiver(string transmitterName, Action<string, CancellationTokenSource> action, CancellationTokenSource cancelTokenSource) =>
             ReceiverProcessingAsync(transmitterName, action, cancelTokenSource);
 
-
+        static int counter;
         static void ReceiverProcessing(string transmitterName, Action<string> action)
         {
             while (true)
             {
+                Debug.WriteLine($"{counter++:000} ++++");
                 try
                 {
                     using var server = new NamedPipeServerStream($"{Environment.UserDomainName}-{Environment.UserName}-{transmitterName}");
                     server.WaitForConnection();
-                    var reader = new StreamReader(server);
-                    var message = reader.ReadToEnd();
-                    action?.Invoke(message);
+                    using var reader = new StreamReader(server);
+                    action?.Invoke(reader.ReadToEnd());
                 }
                 catch
                 {
-                    return;
+                    Debug.WriteLine($"{counter++:000} ++----++");
                 }
+                Debug.WriteLine($"{counter++:000} ----");
             }
         }
         static async Task ReceiverProcessingAsync(string transmitterName, Action<string, CancellationTokenSource> action, CancellationTokenSource cancelTokenSource)
@@ -90,9 +94,8 @@ public static class Transmitter
                 {
                     using var server = new NamedPipeServerStream($"{Environment.UserDomainName}-{Environment.UserName}-{transmitterName}");
                     await server.WaitForConnectionAsync(cancelTokenSource.Token);
-                    var reader = new StreamReader(server);
-                    var message = reader.ReadToEnd();
-                    action?.Invoke(message, cancelTokenSource);
+                    using var reader = new StreamReader(server);
+                    action?.Invoke(reader.ReadToEnd(), cancelTokenSource);
                 }
                 catch (OperationCanceledException)
                 {

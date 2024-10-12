@@ -5,12 +5,14 @@ namespace QwertyIPC;
 
 public static class SingleInstanceApp
 {
+    static Mutex Mutex;
+
     public class BySignal
     {
         public static bool IsFirstInstance(string appName, Action<CancellationTokenSource> onSignalReceived, out CancellationTokenSource cancelTokenSource)
         {
             cancelTokenSource = null!;
-            _ = new Mutex(true, $"{Environment.UserDomainName}-{Environment.UserName}-{appName}", out var prevInstance);
+            Mutex = new Mutex(true, $"{Environment.UserDomainName}-{Environment.UserName}-{appName}", out var prevInstance);
             if (prevInstance)
             {
                 cancelTokenSource = new CancellationTokenSource();
@@ -24,7 +26,7 @@ public static class SingleInstanceApp
         }
         public static bool IsFirstInstance(string appName, Action onSignalReceived)
         {
-            _ = new Mutex(true, $"{Environment.UserDomainName}-{Environment.UserName}-{appName}", out var prevInstance);
+            Mutex = new Mutex(true, $"{Environment.UserDomainName}-{Environment.UserName}-{appName}", out var prevInstance);
             if (prevInstance)
             {
                 Transmitter.Signal.Receiver(appName, onSignalReceived);
@@ -42,7 +44,7 @@ public static class SingleInstanceApp
         public static bool IsFirstInstance(string appName, string messageToFirstInstance, Action<string, CancellationTokenSource> onMessageReceived, out CancellationTokenSource cancelTokenSource)
         {
             cancelTokenSource = null!;
-            _ = new Mutex(true, $"{Environment.UserDomainName}-{Environment.UserName}-{appName}", out var prevInstance);
+            Mutex = new Mutex(true, $"{Environment.UserDomainName}-{Environment.UserName}-{appName}", out var prevInstance);
             if (prevInstance)
             {
                 cancelTokenSource = new CancellationTokenSource();
@@ -56,7 +58,7 @@ public static class SingleInstanceApp
         }
         public static bool IsFirstInstance(string appName, string message, Action<string> onMessageReceived)
         {
-            _ = new Mutex(true, $"{Environment.UserDomainName}-{Environment.UserName}-{appName}", out var prevInstance);
+            Mutex = new Mutex(true, $"{Environment.UserDomainName}-{Environment.UserName}-{appName}", out var prevInstance);
             if (prevInstance)
             {
                 Transmitter.Message.Receiver(appName, onMessageReceived);
