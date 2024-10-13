@@ -66,12 +66,10 @@ public static class Transmitter
         public static Task Receiver(string transmitterName, Action<string, CancellationTokenSource> action, CancellationTokenSource cancelTokenSource) =>
             ReceiverProcessingAsync(transmitterName, action, cancelTokenSource);
 
-        static int counter;
         static void ReceiverProcessing(string transmitterName, Action<string> action)
         {
             while (true)
             {
-                Debug.WriteLine($"{counter++:000} ++++");
                 try
                 {
                     using var server = new NamedPipeServerStream($"{Environment.UserDomainName}-{Environment.UserName}-{transmitterName}");
@@ -79,11 +77,7 @@ public static class Transmitter
                     using var reader = new StreamReader(server);
                     action?.Invoke(reader.ReadToEnd());
                 }
-                catch
-                {
-                    Debug.WriteLine($"{counter++:000} ++----++");
-                }
-                Debug.WriteLine($"{counter++:000} ----");
+                catch { }
             }
         }
         static async Task ReceiverProcessingAsync(string transmitterName, Action<string, CancellationTokenSource> action, CancellationTokenSource cancelTokenSource)
