@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 using System.IO;
 using System.IO.Pipes;
 using System.Threading;
@@ -11,10 +10,9 @@ public static class Transmitter
 {
     public static class Signal
     {
-        public static Task Receiver(string transmitterName, Action action) =>
-            Task.Run(() => ReceiverProcessing(transmitterName, action));
-        public static Task Receiver(string transmitterName, Action<CancellationTokenSource> action, CancellationTokenSource cancelTokenSource) =>
-            ReceiverProcessingAsync(transmitterName, action, cancelTokenSource);
+        public static void Receiver(string transmitterName, Action action) => _ = Task.Run(() => ReceiverProcessing(transmitterName, action));
+        public static void Receiver(string transmitterName, Action<CancellationTokenSource> action, CancellationTokenSource cancelTokenSource) =>
+            _ = ReceiverProcessingAsync(transmitterName, action, cancelTokenSource);
 
 
         static void ReceiverProcessing(string transmitterName, Action action)
@@ -61,23 +59,22 @@ public static class Transmitter
 
     public static class Message
     {
-        public static Task Receiver(string transmitterName, Action<string> action) =>
-            Task.Run(() => ReceiverProcessing(transmitterName, action));
-        public static Task Receiver(string transmitterName, Action<string, CancellationTokenSource> action, CancellationTokenSource cancelTokenSource) =>
-            ReceiverProcessingAsync(transmitterName, action, cancelTokenSource);
+        public static void Receiver(string transmitterName, Action<string> action) => _ = Task.Run(() => ReceiverProcessing(transmitterName, action));
+        public static void Receiver(string transmitterName, Action<string, CancellationTokenSource> action, CancellationTokenSource cancelTokenSource) =>
+            _ = ReceiverProcessingAsync(transmitterName, action, cancelTokenSource);
 
         static void ReceiverProcessing(string transmitterName, Action<string> action)
         {
             while (true)
             {
-                try
+                //try
                 {
                     using var server = new NamedPipeServerStream($"{Environment.UserDomainName}-{Environment.UserName}-{transmitterName}");
                     server.WaitForConnection();
                     using var reader = new StreamReader(server);
                     action?.Invoke(reader.ReadToEnd());
                 }
-                catch { }
+                //catch { }
             }
         }
         static async Task ReceiverProcessingAsync(string transmitterName, Action<string, CancellationTokenSource> action, CancellationTokenSource cancelTokenSource)
